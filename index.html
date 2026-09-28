@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GardenPlan AI — Garden Planner</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <h1>🌱 GardenPlan AI</h1>
+    <p class="tagline">What to plant, when to plant it, and what to do next — from a 41-plant bank tuned to your frost date.</p>
+    <nav class="tabs">
+      <button data-tab="garden" class="active">My garden</button>
+      <button data-tab="calendar">Planting calendar</button>
+      <button data-tab="harvest">Harvest log</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- GARDEN TAB -->
+  <section id="tab-garden" class="tabpage active">
+    <div class="panel">
+      <h2>Your setup</h2>
+      <div id="setError" class="error"></div>
+      <div class="grid3">
+        <label>Hardiness zone<select id="setZone"></select></label>
+        <label>Last frost override (optional)<input id="setFrost" type="date"></label>
+        <label>Plot size / notes<input id="setPlot" placeholder="e.g. 2 raised beds, 4×8 ft"></label>
+      </div>
+      <button id="saveSettings" class="primary">Save setup</button>
+      <p id="frostNote" class="muted small"></p>
+    </div>
+
+    <h2>Next 14 days</h2>
+    <div id="reminders" class="tasks"></div>
+
+    <h2>My plantings</h2>
+    <table class="tbl">
+      <thead><tr><th>Planting</th><th>Planted</th><th>Actions</th></tr></thead>
+      <tbody id="plantRows"></tbody>
+    </table>
+
+    <form id="plantForm" class="panel" onsubmit="return false">
+      <h2>Add a planting</h2>
+      <div id="pError" class="error"></div>
+      <div class="grid3">
+        <label>Plant<select id="pPlant"></select></label>
+        <label>Date planted<input id="pDate" type="date"></label>
+        <label>Method<select id="pMethod">
+          <option value="transplant">Transplanted seedling</option>
+          <option value="sow">Direct sow</option>
+          <option value="indoor">Started indoors</option>
+        </select></label>
+        <label>Quantity<input id="pQty" type="number" min="1" value="1"></label>
+      </div>
+      <label>Notes<input id="pNotes" placeholder="Bed A, north side…"></label>
+      <button id="addPlanting" class="primary">Add planting</button>
+    </form>
+  </section>
+
+  <!-- CALENDAR TAB -->
+  <section id="tab-calendar" class="tabpage">
+    <div class="toolbar">
+      <input id="calSearch" type="search" placeholder="Search the plant bank…">
+      <select id="calType">
+        <option value="all">All types</option>
+        <option>Vegetable</option><option>Herb</option><option>Flower</option>
+      </select>
+    </div>
+    <p class="muted small">Dates are computed from your last frost date (set on the My garden tab). Frost dates are zone averages — adjust if you know yours.</p>
+    <div id="calCards" class="cards"></div>
+  </section>
+
+  <!-- HARVEST TAB -->
+  <section id="tab-harvest" class="tabpage">
+    <h2>Season totals</h2>
+    <div id="harvCards" class="cards"></div>
+    <h2>Log a harvest</h2>
+    <form class="panel" onsubmit="return false">
+      <div id="hError" class="error"></div>
+      <div class="grid3">
+        <label>Planting<select id="hPlanting"></select></label>
+        <label>Date<input id="hDate" type="date"></label>
+        <label>Yield<input id="hQty" inputmode="decimal" placeholder="3.5"></label>
+        <label>Unit<input id="hUnit" placeholder="lbs, count, bunches"></label>
+      </div>
+      <button id="addHarvest" class="primary">Log harvest</button>
+    </form>
+    <h2>History</h2>
+    <table class="tbl">
+      <thead><tr><th>Date</th><th>Plant</th><th class="num">Yield</th></tr></thead>
+      <tbody id="harvRows"></tbody>
+    </table>
+  </section>
+</main>
+
+<footer class="wrap muted small">
+  100% local — your garden data never leaves this browser. Frost dates are approximate zone averages, not guarantees.
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/garden.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
