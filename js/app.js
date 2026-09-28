@@ -42,11 +42,10 @@
   /* ---------- reminders ---------- */
   function renderReminders() {
     var list = G.reminders(plantings, byName, G.todayISO(), 14, GD.WATER_INTERVAL, GD.FERTILIZE_DAYS);
-    var icons = { water: "💧", feed: "🌱", harvest: "🧺" };
     document.getElementById("reminders").innerHTML = list.length
       ? list.map(function (r) {
           return '<div class="task ' + r.kind + '"><span class="tdate">' + esc(G.monthLabel(r.date)) +
-            '</span><span>' + icons[r.kind] + " " + esc(r.text) + "</span></div>";
+            "</span><span>" + esc(r.text) + "</span></div>";
         }).join("")
       : '<p class="muted">No tasks in the next 14 days. Add a planting to get a care schedule.</p>';
   }
