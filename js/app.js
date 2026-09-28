@@ -85,7 +85,7 @@
       function line(label, iso) {
         return iso ? '<div><span class="muted">' + label + ":</span> <strong>" + esc(G.monthLabel(iso)) + "</strong></div>" : "";
       }
-      return '<div class="card"><h3>' + esc(p.name) + '</h3>' +
+      return '<div class="card"><span class="ptype ' + esc(p.type) + '">' + esc(p.type) + '</span><h3>' + esc(p.name) + '</h3>' +
         '<div class="muted small">' + esc(p.type) + " · " + esc(p.sun) + " · water: " + esc(p.water.toLowerCase()) + "</div>" +
         (s ? line("Start indoors", s.indoorStart) + line("Transplant", s.transplant) +
              line("Direct sow", s.sow) + line("Harvest", s.harvestFrom) : '<div class="muted">Set a zone first.</div>') +
