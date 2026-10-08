@@ -12,8 +12,8 @@ GardenPlan AI is a single-page web app (no build step, no dependencies, no accou
 
 1. **Knows your frost date** — pick your USDA hardiness zone (1–13) for an approximate last-spring-frost date, or override it with your own.
 2. **Builds your planting calendar** — 41 plants with indoor-start, transplant, and direct-sow dates computed from your frost date, plus spacing and growing notes. Filter by type or search.
-3. **Reminds you what to do** — add plantings and get a 14-day task list: watering on each plant's cadence (low/medium/high needs), fertilizing every 3 weeks for heavy feeders, and harvest-window alerts.
-4. **Tracks your harvest** — log yields by planting (qty + unit), see season totals per crop.
+3. **Reminds you what to do** — add plantings and get a 14-day task list: watering on each plant's cadence (low/medium/high needs), fertilizing every 3 weeks for heavy feeders, and harvest-window alerts. Check tasks off as you do them, and filter the list to water/feed/harvest only.
+4. **Tracks your harvest** — log yields by planting (qty + unit), see season totals per crop. Plantings show a live harvest countdown, can be archived as finished (restore anytime), and both plantings and harvests export to CSV.
 5. **One-tap planting** — hit "+ Plant this" on any calendar card to jump straight to the planting form.
 
 Everything persists in `localStorage`. Optional: set `OPENAI_API_KEY` for AI garden advice in a future version — nothing requires it.

@@ -55,6 +55,14 @@
       </table>
     </div>
 
+    <div class="journal-head"><h2>Finished</h2><span class="journal-sub">pulled or done for the season</span></div>
+    <div class="panel flush">
+      <table class="tbl">
+        <thead><tr><th>Planting</th><th>Planted</th><th>Actions</th></tr></thead>
+        <tbody id="finishedRows"></tbody>
+      </table>
+    </div>
+
     <form id="plantForm" class="panel" onsubmit="return false">
       <div class="panel-head"><h2>Add a planting</h2></div>
       <div id="pError" class="error"></div>
@@ -106,6 +114,8 @@
 
     <div class="journal-head"><h2>History</h2></div>
     <div class="panel flush">
+      <div class="sec-toolbar"><span class="muted small" id="harvCount"></span>
+        <button id="expHarvests" class="ghost small">Export CSV</button></div>
       <table class="tbl">
         <thead><tr><th>Date</th><th>Plant</th><th class="num">Yield</th></tr></thead>
         <tbody id="harvRows"></tbody>

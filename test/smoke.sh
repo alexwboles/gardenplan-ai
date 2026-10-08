@@ -95,6 +95,48 @@ G.diffDays(G.parseISO('2026-04-01'), G.parseISO('2026-04-15')) === 14
 G.storageSet('tkey', [1, 2]);
 JSON.stringify(G.storageGet('tkey', null)) === '[1,2]' ? ok('storage round-trip works') : bad('storage broken');
 
+// finishPlanting: archives with finishedDate, removes from active
+let pl3 = [];
+G.addPlanting(pl3, { plantName: 'Zucchini', date: today, method: 'sow', qty: 2 }, byName);
+const finRec = G.finishPlanting(pl3, pl3[0].id, today);
+(finRec && finRec.finishedDate === today && pl3.length === 0 && G.finishPlanting(pl3, 'nope', today) === null)
+  ? ok('finishPlanting archives with finishedDate; unknown id -> null') : bad('finishPlanting');
+
+// daysToHarvest: label math for a fresh tomato planting (harvest 75d)
+let pl4 = [];
+G.addPlanting(pl4, { plantName: 'Tomato', date: today, method: 'transplant', qty: 1 }, byName);
+const dh = G.daysToHarvest(pl4[0], byName, today);
+(dh && dh.days === 68 && dh.label === 'harvest in ~68 days')
+  ? ok('daysToHarvest: fresh tomato -> harvest in ~68 days') : bad('daysToHarvest: ' + JSON.stringify(dh));
+// backdated tomato deep in window -> open now
+const old = G.toISO(G.addDays(G.parseISO(today), -80));
+const dh2 = G.daysToHarvest({ plantName: 'Tomato', date: old }, byName, today);
+(dh2 && dh2.label === 'harvest window open now')
+  ? ok('daysToHarvest: 80-day-old tomato -> window open now') : bad('daysToHarvest old: ' + JSON.stringify(dh2));
+
+// task done-state: toggle on/off by stable key
+const r0 = { date: today, kind: 'water', text: 'Water Tomato (1×)' };
+const k0 = G.taskKey(r0);
+let doneMap = G.toggleTaskDone({}, r0);
+(doneMap[k0] && !G.toggleTaskDone(doneMap, r0)[k0])
+  ? ok('toggleTaskDone toggles done state on then off') : bad('toggleTaskDone');
+
+// CSV exports
+let pl5 = [];
+G.addPlanting(pl5, { plantName: 'Basil', date: today, method: 'transplant', qty: 4, notes: 'Bed A, "north"' }, byName);
+const pc = G.plantingsToCSV(pl5).split('\n');
+(pc[0] === 'plant,date,method,qty,notes' && pc[1] === 'Basil,' + today + ',transplant,4,"Bed A, ""north"""')
+  ? ok('plantingsToCSV header + quoted row') : bad('plantingsToCSV: ' + pc[1]);
+const hc = G.harvestsToCSV([{ date: today, plantName: 'Basil', qty: 2, unit: 'bunches' }]).split('\n');
+(hc[0] === 'date,plant,qty,unit' && hc[1] === today + ',Basil,2,bunches')
+  ? ok('harvestsToCSV header + row') : bad('harvestsToCSV');
+
+// filterReminders narrows by kind
+const remAll = G.reminders(pl4, byName, today, 14, GD.WATER_INTERVAL, GD.FERTILIZE_DAYS);
+const wOnly = G.filterReminders(remAll, 'water');
+(wOnly.length > 0 && wOnly.every(r => r.kind === 'water') && G.filterReminders(remAll, 'all').length === remAll.length)
+  ? ok('filterReminders: water-only subset + all passthrough') : bad('filterReminders');
+
 console.log('---');
 console.log('smoke-node: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -113,7 +113,7 @@ button.danger:hover { color: #b3402e; border-color: #b3402e; }
 }
 .task::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--green); border-radius: 0; }
 .task.water::before { background: #4a90b8; }
-.task.fertilize::before { background: var(--terra); }
+.task.fertilize::before, .task.feed::before { background: var(--terra); }
 .task.harvest::before { background: var(--gold); }
 .tdate {
   flex: none; width: 58px; height: 58px; border-radius: 50%;
@@ -122,8 +122,31 @@ button.danger:hover { color: #b3402e; border-color: #b3402e; }
   font: 700 12px/1.25 var(--sans); padding: 6px;
 }
 .task.water .tdate { background: #e3eef5; color: #2f6b8f; }
-.task.fertilize .tdate { background: var(--terra-soft); color: #a0522d; }
+.task.fertilize .tdate, .task.feed .tdate { background: var(--terra-soft); color: #a0522d; }
 .task.harvest .tdate { background: #f7ecd4; color: #8a6a1f; }
+.task.done { opacity: .55; }
+.task.done span:last-child { text-decoration: line-through; }
+.task-check {
+  flex: none; width: 26px; height: 26px; border-radius: 0; cursor: pointer;
+  border: 1.5px solid var(--green-deep); background: transparent; color: var(--green-deep);
+  font: 700 15px/1 var(--sans); display: flex; align-items: center; justify-content: center;
+}
+.task-check[aria-pressed="true"] { background: var(--green-deep); color: #fff; }
+
+/* ---------- reminder kind filter chips + section toolbars ---------- */
+.kind-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.kind-chip {
+  background: var(--card); border: 1px solid var(--line); border-radius: 0; cursor: pointer;
+  font: 700 12.5px var(--sans); color: var(--muted); padding: 7px 14px; transition: all .15s ease;
+}
+.kind-chip:hover { border-color: var(--green); color: var(--ink); }
+.kind-chip.on { background: var(--green-deep); border-color: var(--green-deep); color: #fff; }
+.sec-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 10px 4px; }
+.ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); border-radius: 0; font: 700 13px var(--sans); padding: 9px 16px; cursor: pointer; transition: all .15s ease; }
+.ghost:hover { color: var(--green-deep); border-color: var(--green-deep); }
+.ghost.small { padding: 6px 12px; font-size: 12px; }
+.harv-when { color: var(--green-deep); font-weight: 700; }
+td.actions { white-space: nowrap; }
 
 /* ---------- ledger tables ---------- */
 table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
