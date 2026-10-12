@@ -275,6 +275,64 @@
     return m;
   }
 
+  // Plants with an actionable date (start indoors / transplant / direct sow)
+  // in the next `days` days from today. Returns
+  // [{ plant, actions: [{ kind, date }] }] sorted by soonest action.
+  function plantNow(plants, frost, todayStr, days) {
+    days = days == null ? 14 : days;
+    var today = parseISO(todayStr);
+    if (!today || !frost) return [];
+    var end = addDays(today, days);
+    var out = [];
+    (plants || []).forEach(function (p) {
+      var s = scheduleFor(p, frost);
+      var actions = [];
+      [["indoorStart", "start indoors"], ["transplant", "transplant"], ["sow", "direct sow"]].forEach(function (pair) {
+        var iso = s[pair[0]];
+        var d = iso && parseISO(iso);
+        if (d && d >= today && d <= end) actions.push({ kind: pair[1], date: iso });
+      });
+      if (actions.length) out.push({ plant: p, actions: actions });
+    });
+    out.sort(function (a, b) { return a.actions[0].date < b.actions[0].date ? -1 : 1; });
+    return out;
+  }
+
+  // Bed-space estimate for one planting: row-feet (single row at spacing)
+  // and square feet (square grid at spacing). Null when unknown.
+  function spaceFor(planting, plantsByName) {
+    var plant = (plantsByName || {})[planting.plantName];
+    if (!plant || !plant.spacing || !(planting.qty > 0)) return null;
+    var inches = planting.qty * plant.spacing;
+    return {
+      rowFeet: Math.round((inches / 12) * 10) / 10,
+      sqFeet: Math.round(((plant.spacing * plant.spacing * planting.qty) / 144) * 10) / 10
+    };
+  }
+
+  function totalSpace(plantings, plantsByName) {
+    var rowFeet = 0, sqFeet = 0, count = 0;
+    (plantings || []).forEach(function (p) {
+      var s = spaceFor(p, plantsByName);
+      if (s) { rowFeet += s.rowFeet; sqFeet += s.sqFeet; count++; }
+    });
+    return { rowFeet: Math.round(rowFeet * 10) / 10, sqFeet: Math.round(sqFeet * 10) / 10, count: count };
+  }
+
+  // Edit a planting's date/qty/method/notes in place (plant itself is fixed).
+  function updatePlanting(plantings, id, fields, plantsByName) {
+    var p = plantings.filter(function (x) { return x.id === id; })[0];
+    if (!p) return { ok: false, errors: ["Planting not found."] };
+    var errors = validatePlanting({ plantName: p.plantName, date: fields.date, method: fields.method, qty: fields.qty, notes: fields.notes }, plantsByName);
+    if (errors.length) return { ok: false, errors: errors };
+    p.date = fields.date;
+    p.method = fields.method;
+    p.qty = Number(fields.qty);
+    p.notes = String(fields.notes || "").trim();
+    return { ok: true, planting: p };
+  }
+
+
   return {
     uid: uid, storageGet: storageGet, storageSet: storageSet,
     parseISO: parseISO, toISO: toISO, addDays: addDays, diffDays: diffDays, todayISO: todayISO,
@@ -285,6 +343,8 @@
     plantingsToCSV: plantingsToCSV, harvestsToCSV: harvestsToCSV,
     filterReminders: filterReminders,
     reminders: reminders, addHarvest: addHarvest, harvestTotals: harvestTotals,
-    plantsByName: plantsByName
+    plantsByName: plantsByName,
+    plantNow: plantNow, spaceFor: spaceFor, totalSpace: totalSpace,
+    updatePlanting: updatePlanting
   };
 });

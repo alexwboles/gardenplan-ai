@@ -91,27 +91,69 @@
   }
 
   /* ---------- plantings ---------- */
+  var editingPlantingId = null;
+
+  function editPlantingRow(p) {
+    return '<tr class="editing"><td colspan="3"><div class="pedit-grid">' +
+      "<strong>" + esc(p.plantName) + "</strong>" +
+      '<input type="date" id="peDate" value="' + esc(p.date) + '" aria-label="Planting date">' +
+      '<select id="peMethod" aria-label="Method">' +
+      ["indoor", "transplant", "sow"].map(function (m) {
+        return '<option value="' + m + '"' + (p.method === m ? " selected" : "") + ">" + m + "</option>";
+      }).join("") + "</select>" +
+      '<input type="number" id="peQty" min="1" step="1" value="' + p.qty + '" aria-label="Quantity">' +
+      '<input type="text" id="peNotes" value="' + esc(p.notes || "") + '" placeholder="Notes" aria-label="Notes">' +
+      '<button id="peSave" class="secondary small">Save</button>' +
+      '<button id="peCancel" class="ghost small">Cancel</button></div>' +
+      '<p class="error" id="peError"></p></td></tr>';
+  }
+
   function renderPlantings() {
     var today = G.todayISO();
     var rows = plantings.map(function (p) {
+      if (editingPlantingId === p.id) return editPlantingRow(p);
       var plant = byName[p.plantName] || {};
       var dh = G.daysToHarvest(p, byName, today);
+      var sp = G.spaceFor(p, byName);
       return "<tr><td><strong>" + esc(p.plantName) + "</strong>" +
         '<div class="muted small">' + esc(p.method) + " · " + p.qty + "×" +
         (plant.spacing ? " · " + plant.spacing + '" spacing' : "") +
-        (dh ? ' · <span class="harv-when">' + esc(dh.label) + "</span>" : "") + "</div></td>" +
+        (sp ? " · ~" + sp.rowFeet + " row-ft (" + sp.sqFeet + " sq ft)" : "") +
+        (dh ? ' · <span class="harv-when">' + esc(dh.label) + "</span>" : "") + "</div>" +
+        (p.notes ? '<div class="muted small">“' + esc(p.notes) + "”</div>" : "") + "</td>" +
         "<td>" + esc(p.date) + "</td>" +
         '<td class="actions"><button data-harv="' + p.id + '">Log harvest</button> ' +
+        '<button data-editp="' + p.id + '">Edit</button> ' +
         '<button data-finishp="' + p.id + '" title="Archive as finished">Finish</button> ' +
         '<button data-delp="' + p.id + '" class="danger">Remove</button></td></tr>';
     }).join("");
+    var ts = G.totalSpace(plantings, byName);
     var head = '<div class="sec-toolbar"><span class="muted small">' + plantings.length +
-      " active planting" + (plantings.length === 1 ? "" : "s") + '</span>' +
+      " active planting" + (plantings.length === 1 ? "" : "s") +
+      (ts.count ? " · needs ~" + ts.rowFeet + " row-ft (" + ts.sqFeet + " sq ft) total" : "") + "</span>" +
       (plantings.length ? '<button id="expPlantings" class="ghost small">Export CSV</button>' : "") + "</div>";
     document.getElementById("plantRows").innerHTML = head + (rows ||
       '<tr><td colspan="3" class="muted">Nothing planted yet — add your first planting below.</td></tr>');
     var exp = document.getElementById("expPlantings");
     if (exp) exp.addEventListener("click", function () { downloadCSV(G.plantingsToCSV(plantings), "garden-plantings.csv"); });
+    var peSave = document.getElementById("peSave");
+    if (peSave) {
+      peSave.addEventListener("click", function () {
+        var res = G.updatePlanting(plantings, editingPlantingId, {
+          date: document.getElementById("peDate").value,
+          method: document.getElementById("peMethod").value,
+          qty: document.getElementById("peQty").value,
+          notes: document.getElementById("peNotes").value
+        }, byName);
+        document.getElementById("peError").textContent = res.ok ? "" : res.errors.join(" ");
+        if (!res.ok) return;
+        editingPlantingId = null;
+        save(); renderReminders(); renderPlantings();
+      });
+      document.getElementById("peCancel").addEventListener("click", function () {
+        editingPlantingId = null; renderPlantings();
+      });
+    }
     var arch = finished.slice().reverse().map(function (p) {
       return "<tr><td><strong>" + esc(p.plantName) + "</strong>" +
         '<div class="muted small">' + esc(p.method) + " · " + p.qty + "× · finished " + esc(p.finishedDate || "") + "</div></td>" +
@@ -131,19 +173,29 @@
   }
 
   /* ---------- calendar ---------- */
+  var calNowOnly = false;
   function renderCalendar() {
     var f = frostDate();
     var q = document.getElementById("calSearch").value.trim().toLowerCase();
     var typeF = document.getElementById("calType").value;
+    var nowMap = {};
+    if (calNowOnly && f) {
+      G.plantNow(GD.PLANTS, f, G.todayISO(), 14).forEach(function (r) { nowMap[r.plant.name] = r.actions; });
+    }
     var cards = GD.PLANTS.filter(function (p) {
       return (!q || p.name.toLowerCase().indexOf(q) !== -1) &&
-             (typeF === "all" || p.type === typeF);
+             (typeF === "all" || p.type === typeF) &&
+             (!calNowOnly || nowMap[p.name]);
     }).map(function (p) {
       var s = f ? G.scheduleFor(p, f) : null;
+      var actions = nowMap[p.name];
+      var nowBadge = actions
+        ? '<div class="now-badge">⏱ ' + actions.map(function (a) { return esc(a.kind) + " by " + esc(G.monthLabel(a.date)); }).join(" · ") + "</div>"
+        : "";
       function line(label, iso) {
         return iso ? '<div><span class="muted">' + label + ":</span> <strong>" + esc(G.monthLabel(iso)) + "</strong></div>" : "";
       }
-      return '<div class="card"><span class="ptype ' + esc(p.type) + '">' + esc(p.type) + '</span><h3>' + esc(p.name) + '</h3>' +
+      return '<div class="card"><span class="ptype ' + esc(p.type) + '">' + esc(p.type) + '</span><h3>' + esc(p.name) + '</h3>' + nowBadge +
         '<div class="muted small">' + esc(p.type) + " · " + esc(p.sun) + " · water: " + esc(p.water.toLowerCase()) + "</div>" +
         (s ? line("Start indoors", s.indoorStart) + line("Transplant", s.transplant) +
              line("Direct sow", s.sow) + line("Harvest", s.harvestFrom) : '<div class="muted">Set a zone first.</div>') +
@@ -204,6 +256,9 @@
 
     document.getElementById("calSearch").addEventListener("input", renderCalendar);
     document.getElementById("calType").addEventListener("change", renderCalendar);
+    document.getElementById("calNow").addEventListener("change", function (e) {
+      calNowOnly = e.target.checked; renderCalendar();
+    });
 
     document.getElementById("calCards").addEventListener("click", function (e) {
       var b = e.target.closest("[data-addplant]");
@@ -218,6 +273,8 @@
       var d = e.target.closest("[data-delp]");
       var h = e.target.closest("[data-harv]");
       var f = e.target.closest("[data-finishp]");
+      var ep = e.target.closest("[data-editp]");
+      if (ep) { editingPlantingId = ep.dataset.editp; renderPlantings(); return; }
       if (d && confirm("Remove this planting?")) {
         G.deletePlanting(plantings, d.dataset.delp);
         save(); renderReminders(); renderPlantings(); renderHarvest();

@@ -201,3 +201,15 @@ table.tbl button { margin-right: 6px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* plant-now filter + planting edit row + space estimates */
+.now-check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); white-space: nowrap; cursor: pointer; }
+.now-check input { width: 16px; height: 16px; accent-color: var(--leaf, #3f7a3f); }
+.now-badge {
+  display: inline-block; margin: 8px 0 4px; padding: 6px 10px;
+  background: #eef5e6; border: 1px solid #cfe0bd; color: #3c5a2b;
+  font-size: 12.5px; font-weight: 600;
+}
+.pedit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 0.7fr 1.4fr auto auto; gap: 8px; align-items: center; }
+.pedit-grid input, .pedit-grid select { border-radius: 0; }
+@media (max-width: 720px) { .pedit-grid { grid-template-columns: 1fr 1fr; } }
