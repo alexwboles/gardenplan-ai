@@ -115,12 +115,25 @@
       var plant = byName[p.plantName] || {};
       var dh = G.daysToHarvest(p, byName, today);
       var sp = G.spaceFor(p, byName);
+      var growthHtml = "";
+      if (plant && plant.harvest) {
+        var elapsed = G.diffDays(G.parseISO(p.date), G.parseISO(today));
+        if (!isNaN(elapsed) && elapsed >= 0) {
+          var span = Math.max(1, plant.harvest - 7);
+          var pct = Math.max(0, Math.min(100, Math.round(elapsed / span * 100)));
+          var open = dh && dh.label.indexOf("window") !== -1;
+          growthHtml = '<div class="growth' + (open ? " open" : "") + '">' +
+            '<div class="growth-track"><div class="growth-fill" style="width:' + (open ? 100 : pct) + '%"></div></div>' +
+            '<div class="growth-lbl">day <b>' + elapsed + "</b> of ~" + span +
+            (dh ? ' · <b>' + esc(dh.label) + "</b>" : "") + "</div></div>";
+        }
+      }
       return "<tr><td><strong>" + esc(p.plantName) + "</strong>" +
         '<div class="muted small">' + esc(p.method) + " · " + p.qty + "×" +
         (plant.spacing ? " · " + plant.spacing + '" spacing' : "") +
         (sp ? " · ~" + sp.rowFeet + " row-ft (" + sp.sqFeet + " sq ft)" : "") +
-        (dh ? ' · <span class="harv-when">' + esc(dh.label) + "</span>" : "") +
         (p.lastWatered ? ' · <span class="watered-when">watered ' + esc(G.monthLabel(p.lastWatered)) + "</span>" : "") + "</div>" +
+        growthHtml +
         (p.notes ? '<div class="muted small">“' + esc(p.notes) + "”</div>" : "") + "</td>" +
         "<td>" + esc(p.date) + "</td>" +
         '<td class="actions"><button data-harv="' + p.id + '">Log harvest</button> ' +
@@ -207,7 +220,14 @@
       function line(label, iso) {
         return iso ? '<div><span class="muted">' + label + ":</span> <strong>" + esc(G.monthLabel(iso)) + "</strong></div>" : "";
       }
-      return '<div class="card"><span class="ptype ' + esc(p.type) + '">' + esc(p.type) + '</span><h3>' + esc(p.name) + '</h3>' + nowBadge +
+      var foes = (GD.ANTAGONISTS || []).filter(function (pair) { return pair[0] === p.name || pair[1] === p.name; });
+      var avoidHtml = foes.length
+        ? '<div class="avoid" title="' + esc(foes.map(function (pair) {
+            return (pair[0] === p.name ? pair[1] : pair[0]) + ": " + pair[2];
+          }).join(" · ")) + '">Avoid planting near: ' +
+          esc(foes.map(function (pair) { return pair[0] === p.name ? pair[1] : pair[0]; }).join(", ")) + "</div>"
+        : "";
+      return '<div class="card pt-' + esc(p.type) + '"><span class="ptype ' + esc(p.type) + '">' + esc(p.type) + '</span><h3>' + esc(p.name) + '</h3>' + nowBadge + avoidHtml +
         '<div class="muted small">' + esc(p.type) + " · " + esc(p.sun) + " · water: " + esc(p.water.toLowerCase()) + "</div>" +
         (s ? line("Start indoors", s.indoorStart) + line("Transplant", s.transplant) +
              line("Direct sow", s.sow) + line("Harvest", s.harvestFrom) : '<div class="muted">Set a zone first.</div>') +

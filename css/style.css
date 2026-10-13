@@ -40,7 +40,7 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -.01em
 .topbar { border-bottom: 1px solid var(--line); background: rgba(250, 246, 236, .92); backdrop-filter: blur(6px); position: sticky; top: 0; z-index: 50; }
 .masthead { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 18px; padding-bottom: 14px; }
 .brand { display: flex; gap: 14px; align-items: flex-start; }
-.brand-mark { width: 46px; height: 46px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; flex: none; box-shadow: 0 6px 14px rgba(31, 92, 56, .3); }
+.brand-mark { width: 46px; height: 46px; background: var(--green); display: flex; align-items: center; justify-content: center; flex: none; box-shadow: 0 6px 14px rgba(31, 92, 56, .3); }
 .brand-text h1 { margin: 0; font-size: 27px; line-height: 1.1; }
 .brand-text h1 span { color: var(--green); }
 .tagline { margin: 5px 0 0; color: var(--muted); font-size: 13px; max-width: 52ch; }
@@ -116,7 +116,7 @@ button.danger:hover { color: #b3402e; border-color: #b3402e; }
 .task.fertilize::before, .task.feed::before { background: var(--terra); }
 .task.harvest::before { background: var(--gold); }
 .tdate {
-  flex: none; width: 58px; height: 58px; border-radius: 50%;
+  flex: none; width: 58px; height: 58px;
   background: var(--green-soft); color: var(--green-deep);
   display: flex; align-items: center; justify-content: center; text-align: center;
   font: 700 12px/1.25 var(--sans); padding: 6px;
@@ -226,3 +226,20 @@ table.tbl button { margin-right: 6px; }
 .pedit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 0.7fr 1.4fr auto auto; gap: 8px; align-items: center; }
 .pedit-grid input, .pedit-grid select { border-radius: 0; }
 @media (max-width: 720px) { .pedit-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- 2026 redesign: growth progress strips + type-coded cards + avoid-neighbors ---------- */
+.growth { margin-top: 8px; max-width: 320px; }
+.growth-track { height: 8px; background: var(--line-soft); border: 1px solid var(--line); }
+.growth-fill { height: 100%; background: var(--green); }
+.growth.open .growth-fill { background: var(--gold); }
+.growth-lbl { font-size: 11.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.growth-lbl b { color: var(--green-deep); }
+.growth.open .growth-lbl b { color: #8a6a1f; }
+.card.pt-Vegetable::after { background: var(--green); }
+.card.pt-Herb::after { background: #2a7a68; }
+.card.pt-Flower::after { background: var(--terra); }
+.avoid {
+  display: inline-block; margin: 8px 0 4px; padding: 6px 10px;
+  background: var(--terra-soft); border: 1px solid #e8c9b4; color: #8a4a2a;
+  font-size: 12.5px; font-weight: 600;
+}

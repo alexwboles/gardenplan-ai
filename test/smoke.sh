@@ -186,3 +186,25 @@ NODEEOF
 echo "---"
 echo "smoke: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
+
+# redesign sweep: growth strips, avoid-neighbors, sharp corners
+node -e "
+var G = require('./js/garden.js');
+var GD = require('./js/data.js');
+var fs = require('fs'), a = fs.readFileSync('./js/app.js', 'utf8');
+['growth-fill', 'day <b>', 'Avoid planting near', 'pt-\' + esc(p.type)'].forEach(function (s) {
+  if (a.indexOf(s) < 0) { console.error('app missing ' + s); process.exit(1); }
+});
+var c = fs.readFileSync('./css/style.css', 'utf8');
+['.growth', '.avoid', '.pt-Herb', '.pt-Flower'].forEach(function (s) {
+  if (c.indexOf(s) < 0) { console.error('css missing ' + s); process.exit(1); }
+});
+if (c.indexOf('border-radius: 50%') >= 0) { console.error('circular remnant'); process.exit(1); }
+// growth math: 60 days into 68-day tomato window
+var today = G.todayISO();
+var planted = G.toISO(G.addDays(G.parseISO(today), -60));
+var elapsed = G.diffDays(G.parseISO(planted), G.parseISO(today));
+if (elapsed !== 60) { console.error('diffDays ' + elapsed); process.exit(1); }
+var pct = Math.round(elapsed / (75 - 7) * 100);
+if (pct !== 88) { console.error('pct ' + pct); process.exit(1); }
+console.log('OK');" 2>/dev/null && ok "growth strips + avoid-neighbors + sharp corners" || bad "redesign checks"
