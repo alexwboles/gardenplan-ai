@@ -119,16 +119,28 @@
         '<div class="muted small">' + esc(p.method) + " · " + p.qty + "×" +
         (plant.spacing ? " · " + plant.spacing + '" spacing' : "") +
         (sp ? " · ~" + sp.rowFeet + " row-ft (" + sp.sqFeet + " sq ft)" : "") +
-        (dh ? ' · <span class="harv-when">' + esc(dh.label) + "</span>" : "") + "</div>" +
+        (dh ? ' · <span class="harv-when">' + esc(dh.label) + "</span>" : "") +
+        (p.lastWatered ? ' · <span class="watered-when">watered ' + esc(G.monthLabel(p.lastWatered)) + "</span>" : "") + "</div>" +
         (p.notes ? '<div class="muted small">“' + esc(p.notes) + "”</div>" : "") + "</td>" +
         "<td>" + esc(p.date) + "</td>" +
         '<td class="actions"><button data-harv="' + p.id + '">Log harvest</button> ' +
+        '<button data-watered="' + p.id + '" title="Log today\'s watering">Watered</button> ' +
         '<button data-editp="' + p.id + '">Edit</button> ' +
         '<button data-finishp="' + p.id + '" title="Archive as finished">Finish</button> ' +
         '<button data-delp="' + p.id + '" class="danger">Remove</button></td></tr>';
     }).join("");
     var ts = G.totalSpace(plantings, byName);
-    var head = '<div class="sec-toolbar"><span class="muted small">' + plantings.length +
+    var comp = G.companionCheck(plantings, GD.ANTAGONISTS);
+    var compHtml = comp.length
+      ? '<div class="companion-note"><strong>Bad neighbors in your beds:</strong> ' +
+        comp.map(function (c) { return esc(c.a) + " × " + esc(c.b) + " — " + esc(c.reason); }).join(" · ") + "</div>"
+      : "";
+    var hints = G.successionHints(plantings, finished, byName, today);
+    var hintHtml = hints.length
+      ? '<div class="succession-note"><strong>Succession planting:</strong> ' +
+        hints.map(function (h) { return esc(h.text); }).join(" · ") + "</div>"
+      : "";
+    var head = compHtml + hintHtml + '<div class="sec-toolbar"><span class="muted small">' + plantings.length +
       " active planting" + (plantings.length === 1 ? "" : "s") +
       (ts.count ? " · needs ~" + ts.rowFeet + " row-ft (" + ts.sqFeet + " sq ft) total" : "") + "</span>" +
       (plantings.length ? '<button id="expPlantings" class="ghost small">Export CSV</button>' : "") + "</div>";
@@ -274,7 +286,9 @@
       var h = e.target.closest("[data-harv]");
       var f = e.target.closest("[data-finishp]");
       var ep = e.target.closest("[data-editp]");
+      var w = e.target.closest("[data-watered]");
       if (ep) { editingPlantingId = ep.dataset.editp; renderPlantings(); return; }
+      if (w) { G.markWatered(plantings, w.dataset.watered, G.todayISO()); save(); renderReminders(); renderPlantings(); return; }
       if (d && confirm("Remove this planting?")) {
         G.deletePlanting(plantings, d.dataset.delp);
         save(); renderReminders(); renderPlantings(); renderHarvest();

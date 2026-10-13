@@ -178,6 +178,64 @@
     return rows.map(function (r) { return r.join(","); }).join("\n");
   }
 
+  // Companion-planting check: flag antagonistic pairs among active plantings.
+  // antagonists = [[nameA, nameB, reason], ...]. Returns [{ a, b, reason }].
+  function companionCheck(plantings, antagonists) {
+    var names = {};
+    (plantings || []).forEach(function (p) { names[p.plantName] = true; });
+    var out = [], seen = {};
+    (antagonists || []).forEach(function (pair) {
+      var a = pair[0], b = pair[1];
+      if (names[a] && names[b]) {
+        var key = a < b ? a + "|" + b : b + "|" + a;
+        if (!seen[key]) {
+          seen[key] = true;
+          out.push({ a: a, b: b, reason: pair[2] || "these two don't get along" });
+        }
+      }
+    });
+    return out;
+  }
+
+  // Log a watering for a planting; watering reminders re-anchor from here.
+  function markWatered(plantings, id, todayStr) {
+    var p = plantings.filter(function (x) { return x.id === id; })[0];
+    if (!p) return false;
+    p.lastWatered = todayStr || todayISO();
+    return true;
+  }
+
+  // Succession hints: fast crops past their harvest window (sow again), and
+  // recently finished beds ready for a quick crop. Returns [{ kind, plantName, text }].
+  function successionHints(plantings, finished, plantsByName, todayStr) {
+    var out = [];
+    var today = parseISO(todayStr);
+    if (!today) return out;
+    (plantings || []).forEach(function (pl) {
+      var plant = (plantsByName || {})[pl.plantName];
+      var dth = daysToHarvest(pl, plantsByName, todayStr);
+      if (plant && dth && dth.label === "harvest window passed" && plant.harvest <= 65) {
+        out.push({
+          kind: "resow", plantName: pl.plantName,
+          text: pl.plantName + " is past its harvest window — sow again now for a second crop."
+        });
+      }
+    });
+    (finished || []).forEach(function (f) {
+      var plant = (plantsByName || {})[f.plantName];
+      var fd = parseISO(f.finishedDate);
+      var since = fd && diffDays(fd, today);
+      if (plant && fd && since >= 0 && since <= 21) {
+        out.push({
+          kind: "replant", plantName: f.plantName,
+          text: "The " + f.plantName + " bed freed up " + monthLabel(toISO(fd)) +
+            " — a fast crop (radish, lettuce, green beans) fits before season's end."
+        });
+      }
+    });
+    return out;
+  }
+
   // Filter reminders by kind; "all" returns everything.
   function filterReminders(list, kind) {
     if (!kind || kind === "all") return list || [];
@@ -201,13 +259,12 @@
       if (!plant) return;
       var planted = parseISO(pl.date);
       if (!planted || planted > end) return;
-      // watering cadence
+      // watering cadence, anchored at the last logged watering (or planting)
       var every = (waterInterval || {})[plant.water] || 4;
       var horizon = addDays(planted, 90);
-      for (var d = new Date(Math.max(planted.getTime(), today.getTime())); d <= Math.min(horizon.getTime(), end.getTime()); d = addDays(d, 1)) {
-        if (diffDays(planted, d) % every === 0) {
-          push(toISO(d), "Water " + pl.plantName + " (" + pl.qty + "×)", "water");
-        }
+      var anchor = parseISO(pl.lastWatered) || planted;
+      for (var d = new Date(anchor.getTime()); d <= Math.min(horizon.getTime(), end.getTime()); d = addDays(d, every)) {
+        if (d >= today) push(toISO(d), "Water " + pl.plantName + " (" + pl.qty + "×)", "water");
       }
       // fertilizing
       if (plant.type === "Vegetable" || plant.water === "High") {
@@ -345,6 +402,8 @@
     reminders: reminders, addHarvest: addHarvest, harvestTotals: harvestTotals,
     plantsByName: plantsByName,
     plantNow: plantNow, spaceFor: spaceFor, totalSpace: totalSpace,
-    updatePlanting: updatePlanting
+    updatePlanting: updatePlanting,
+    companionCheck: companionCheck, markWatered: markWatered,
+    successionHints: successionHints
   };
 });

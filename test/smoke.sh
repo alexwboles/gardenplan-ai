@@ -137,6 +137,46 @@ const wOnly = G.filterReminders(remAll, 'water');
 (wOnly.length > 0 && wOnly.every(r => r.kind === 'water') && G.filterReminders(remAll, 'all').length === remAll.length)
   ? ok('filterReminders: water-only subset + all passthrough') : bad('filterReminders');
 
+// antagonist table present and well-formed
+(Array.isArray(GD.ANTAGONISTS) && GD.ANTAGONISTS.length >= 10 &&
+ GD.ANTAGONISTS.every(p => p.length === 3 && byName[p[0]] && byName[p[1]]))
+  ? ok('ANTAGONISTS: ' + GD.ANTAGONISTS.length + ' pairs, all names in the bank') : bad('ANTAGONISTS table');
+
+// companionCheck: flags antagonistic pairs among plantings
+let pl6 = [];
+G.addPlanting(pl6, { plantName: 'Tomato', date: today, method: 'transplant', qty: 2 }, byName);
+G.addPlanting(pl6, { plantName: 'Corn', date: today, method: 'sow', qty: 6 }, byName);
+const comp = G.companionCheck(pl6, GD.ANTAGONISTS);
+(comp.length === 1 && comp[0].a === 'Tomato' && comp[0].b === 'Corn' && /heavy feeders/.test(comp[0].reason))
+  ? ok('companionCheck flags Tomato × Corn with reason') : bad('companionCheck: ' + JSON.stringify(comp));
+G.companionCheck([{ plantName: 'Tomato' }], GD.ANTAGONISTS).length === 0
+  ? ok('companionCheck quiet when no pair present') : bad('companionCheck false positive');
+
+// markWatered: logs watering and re-anchors the watering schedule
+let pl7 = [];
+G.addPlanting(pl7, { plantName: 'Tomato', date: today, method: 'transplant', qty: 1 }, byName);
+const pid = pl7[0].id;
+const twoAgo = G.toISO(G.addDays(G.parseISO(today), -2));
+G.markWatered(pl7, pid, twoAgo);
+(pl7[0].lastWatered === twoAgo && G.markWatered(pl7, 'nope', today) === false)
+  ? ok('markWatered stamps lastWatered; unknown id -> false') : bad('markWatered');
+const rem7 = G.reminders(pl7, byName, today, 14, GD.WATER_INTERVAL, GD.FERTILIZE_DAYS);
+const w7 = rem7.filter(r => r.kind === 'water').map(r => r.date);
+(w7[0] === G.toISO(G.addDays(G.parseISO(today), 2)))
+  ? ok('reminders re-anchor: first watering now +2d after logged watering') : bad('water anchor: ' + w7.join(','));
+
+// successionHints: past-window fast crop -> resow; recent finished bed -> replant
+let pl8 = [];
+const oldLettuce = G.toISO(G.addDays(G.parseISO(today), -60)); // lettuce harvest 45d -> window passed
+G.addPlanting(pl8, { plantName: 'Lettuce', date: oldLettuce, method: 'sow', qty: 8 }, byName);
+const fin8 = [{ plantName: 'Radish', date: oldLettuce, method: 'sow', qty: 12, finishedDate: G.toISO(G.addDays(G.parseISO(today), -5)) }];
+const hints = G.successionHints(pl8, fin8, byName, today);
+(hints.length === 2 && hints.some(h => h.kind === 'resow' && h.plantName === 'Lettuce') &&
+ hints.some(h => h.kind === 'replant' && /Radish/.test(h.text)))
+  ? ok('successionHints: resow past-window lettuce + replant freed radish bed') : bad('successionHints: ' + JSON.stringify(hints));
+G.successionHints([], [], byName, today).length === 0
+  ? ok('successionHints empty when nothing to suggest') : bad('successionHints noise');
+
 console.log('---');
 console.log('smoke-node: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

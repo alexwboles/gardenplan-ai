@@ -122,6 +122,38 @@ G.addHarvest(f13h, { plantingId: f13[0].id, date: G.todayISO(), qty: '1.5', unit
 (G.plantingsToCSV(f13).split('\n').length === 2 && G.harvestsToCSV(f13h).split('\n').length === 2)
   ? ok('flow13: plantings + harvests export as 2-line CSVs') : bad('flow13');
 
+// Flow 14: companion warning catches a real clash in the beds
+const f14 = [];
+G.addPlanting(f14, { plantName: 'Onion (sets)', date: G.todayISO(), method: 'sow', qty: 10 }, byName);
+G.addPlanting(f14, { plantName: 'Green Beans', date: G.todayISO(), method: 'sow', qty: 8 }, byName);
+const f14c = G.companionCheck(f14, GD.ANTAGONISTS);
+(f14c.length === 1 && /alliums inhibit/.test(f14c[0].reason))
+  ? ok('flow14: Onion (sets) × Green Beans flagged — ' + f14c[0].reason) : bad('flow14: ' + JSON.stringify(f14c));
+
+// Flow 15: watering log re-anchors the care calendar
+const f15 = [];
+G.addPlanting(f15, { plantName: 'Cucumber', date: G.todayISO(), method: 'sow', qty: 2 }, byName); // high water, every 2d
+G.markWatered(f15, f15[0].id, G.todayISO());
+const f15r = G.reminders(f15, byName, G.todayISO(), 6, GD.WATER_INTERVAL, GD.FERTILIZE_DAYS);
+const f15w = f15r.filter(r => r.kind === 'water').map(r => r.date);
+(f15w.length === 4 && f15w[0] === G.todayISO() && f15w[3] === G.toISO(G.addDays(G.parseISO(G.todayISO()), 6)))
+  ? ok('flow15: after logging a watering, schedule runs +0/+2/+4/+6d') : bad('flow15: ' + f15w.join(','));
+
+// Flow 16: succession hints after a spent crop and a freed bed
+const f16 = [];
+const f16old = G.toISO(G.addDays(G.parseISO(G.todayISO()), -70)); // radish harvest 28d -> long past
+G.addPlanting(f16, { plantName: 'Radish', date: f16old, method: 'sow', qty: 20 }, byName);
+const f16fin = [{ plantName: 'Spinach', date: f16old, method: 'sow', qty: 6, finishedDate: G.toISO(G.addDays(G.parseISO(G.todayISO()), -3)) }];
+const f16h = G.successionHints(f16, f16fin, byName, G.todayISO());
+(f16h.length === 2 && f16h[0].kind === 'resow' && /Radish/.test(f16h[0].text) && f16h[1].kind === 'replant' && /Spinach/.test(f16h[1].text))
+  ? ok('flow16: resow spent radish + replant freed spinach bed') : bad('flow16: ' + JSON.stringify(f16h));
+
+// Flow 17: the three features are wired into the app shell
+const fs = require('fs');
+const appSrc = fs.readFileSync('/home/hatch/workspace/gardenplan-ai/js/app.js', 'utf8');
+(/data-watered/.test(appSrc) && /companionCheck/.test(appSrc) && /successionHints/.test(appSrc) && /markWatered/.test(appSrc))
+  ? ok('flow17: app.js wires companion warnings, Watered button, succession hints') : bad('flow17 wiring');
+
 console.log('---');
 console.log('e2e: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

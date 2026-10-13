@@ -202,6 +202,19 @@ table.tbl button { margin-right: 6px; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 
+/* companion + succession notes, watering state */
+.companion-note {
+  margin: 10px 10px 8px; padding: 10px 14px;
+  background: var(--terra-soft); border: 1px solid #e8c9b4; color: #8a4a2a;
+  font-size: 13.5px;
+}
+.succession-note {
+  margin: 0 10px 8px; padding: 10px 14px;
+  background: var(--green-soft); border: 1px solid #cfe0bd; color: var(--green-deep);
+  font-size: 13.5px;
+}
+.watered-when { color: var(--green); font-weight: 600; }
+
 /* plant-now filter + planting edit row + space estimates */
 .now-check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink); white-space: nowrap; cursor: pointer; }
 .now-check input { width: 16px; height: 16px; accent-color: var(--leaf, #3f7a3f); }

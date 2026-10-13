@@ -64,10 +64,32 @@
   var WATER_INTERVAL = { "Low": 7, "Medium": 4, "High": 2 }; // days between waterings
   var FERTILIZE_DAYS = 21;
 
+  // Classic antagonistic pairs — keep these apart in the bed.
+  // [plant A, plant B, why they clash]. Names must match the plant bank.
+  var ANTAGONISTS = [
+    ["Tomato", "Corn", "both are heavy feeders and compete hard"],
+    ["Tomato", "Potato", "same family — blight jumps between them"],
+    ["Cherry Tomato", "Corn", "both are heavy feeders and compete hard"],
+    ["Cherry Tomato", "Potato", "same family — blight jumps between them"],
+    ["Onion (sets)", "Green Beans", "alliums inhibit beans and peas"],
+    ["Onion (sets)", "Peas", "alliums inhibit beans and peas"],
+    ["Garlic", "Green Beans", "alliums inhibit beans and peas"],
+    ["Garlic", "Peas", "alliums inhibit beans and peas"],
+    ["Chives", "Green Beans", "alliums inhibit beans and peas"],
+    ["Chives", "Peas", "alliums inhibit beans and peas"],
+    ["Carrot", "Dill", "dill can stunt carrot growth"],
+    ["Cucumber", "Potato", "cucumbers sulk near potatoes"],
+    ["Broccoli", "Tomato", "brassicas and tomatoes compete for nutrients"],
+    ["Cauliflower", "Tomato", "brassicas and tomatoes compete for nutrients"],
+    ["Cabbage", "Tomato", "brassicas and tomatoes compete for nutrients"],
+    ["Sunflower", "Potato", "sunflowers are allelopathic — they suppress neighbors"]
+  ];
+
   return {
     ZONE_FROST: ZONE_FROST,
     PLANTS: PLANTS,
     WATER_INTERVAL: WATER_INTERVAL,
-    FERTILIZE_DAYS: FERTILIZE_DAYS
+    FERTILIZE_DAYS: FERTILIZE_DAYS,
+    ANTAGONISTS: ANTAGONISTS
   };
 });
